@@ -1,42 +1,47 @@
 ---@diagnostic disable: undefined-global
--- Hanbot provides globals like `game` and `TYPE_HERO` at runtime.
--- This hint only avoids editor false positives.
+-- Hanbot provides globals like `TYPE_HERO` at runtime.
 -- targeting.lua
--- This file owns the v1 target lookup rules.
+-- This file owns target lookup using the orb combat target.
 
 local M = {}
 
-function M.get_q_target(q_range)
-  if game == nil then
+local orb = module.internal('orb')
+
+--- Returns the orb combat target if valid, in range, and an enemy hero.
+--- @param range number Maximum distance to consider.
+--- @return obj|nil The target or nil.
+function M.get_combat_target(range)
+  if orb == nil or orb.combat == nil then
     return nil
   end
 
-  -- v1 uses the documented example pattern of reading
-  -- the currently selected target rather than inventing
-  -- a target selector API.
-  -- Hanbot's `player:castSpell(...)` docs include
-  -- `game.selectedTarget` in the cast example.
-  local target = game.selectedTarget
+  local target = (orb.combat.target or orb.combat.get_target and orb.combat.get_target())
+    or (game and game.selectedTarget)
 
   if target == nil then
     return nil
   end
 
-  if not target.valid then
+  -- Prefer orb target; game.selectedTarget needs basic validation.
+  if target.valid == false then
     return nil
   end
-
-  -- Keep this focused on champion targeting for Zed Q logic.
-  if target.type ~= TYPE_HERO then
+  if target.type ~= nil and target.type ~= TYPE_HERO then
     return nil
   end
-
-  -- This is the key documented validation check for v1.
-  if not target:isValidTarget(q_range) then
+  if target.isDead then
+    return nil
+  end
+  if not target:isValidTarget(range) then
     return nil
   end
 
   return target
+end
+
+--- Compatible with existing logic; delegates to get_combat_target.
+function M.get_q_target(q_range)
+  return M.get_combat_target(q_range)
 end
 
 return M

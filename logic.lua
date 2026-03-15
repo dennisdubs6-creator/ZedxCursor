@@ -41,49 +41,125 @@ local function build_debug_message(target, q_range)
   )
 end
 
-function M.on_tick(menu, spells, targeting)
-  if menu == nil or spells == nil or targeting == nil then
+local DIAG_THROTTLE = 1.0
+local diag_last = 0
+
+local function diag(menu, msg)
+  if not menu then return end
+  local diag_on = (menu.debug_diag and menu.debug_diag:get())
+    or (menu.debug_logs and menu.debug_logs:get())
+  if not diag_on then return end
+  local now = game and game.time or 0
+  if now - diag_last < DIAG_THROTTLE then
+    return
+  end
+  diag_last = now
+  print('[Zedx] ' .. tostring(msg))
+end
+
+function M.on_tick(menu, spells, targeting, orb, pred)
+  if menu == nil or spells == nil or targeting == nil or orb == nil or pred == nil then
+    diag(menu, 'nil_module')
     return
   end
 
-  if not menu.use_q:get() then
+  if not menu.enable_combo:get() then
     return
   end
 
-  local q_ready = spells.is_q_ready()
-
-  if not q_ready then
+  if orb.core.is_spell_locked() then
+    diag(menu, 'spell_locked')
     return
   end
 
   local q_range = spells.get_q_range()
-  local target = targeting.get_q_target(q_range)
-  local q_slot = spells.get_q_slot()
+  local e_range = spells.get_e_range()
+  local target = targeting.get_combat_target(math.max(q_range, e_range))
 
-  if target == nil or q_slot == nil then
+  if target == nil then
+    diag(menu, 'no_target')
     return
   end
 
-  -- Use game.time to prevent log spam while the same
-  -- conditions stay true across many ticks.
   local now = game.time
 
-  if not can_log_now(now) then
+  -- E first (instant slow), then Q only after E (user prefers E -> Q order).
+  if menu.use_e:get() and spells.is_e_ready() then
+    if target:isValidTarget(e_range) then
+      player:castSpell('self', _E)
+      return
+    end
+  end
+
+  -- Q only after E when both in range. If target out of E range, allow Q (can't E anyway).
+  if not menu.use_q:get() then
+    diag(menu, 'use_q_off')
+    return
+  end
+  -- Only wait for E when use_e is on; if use_e off, allow Q regardless.
+  -- No longer block Q for "E first" - cast Q when ready; E handled above.
+  if not spells.is_q_ready() then
+    diag(menu, 'q_not_ready')
     return
   end
 
-  if menu.debug_logs:get() then
-    print(build_debug_message(target, q_range))
+  local origin = player and player.pos or nil
+  if not origin then
+    diag(menu, 'no_origin')
+    return
   end
 
-  -- This is the smallest real cast step:
-  -- cast Q as a position spell at the selected target's current position.
-  -- This uses documented APIs only:
-  -- `player:castSpell('pos', slot, vec3)` plus `target.pos`.
-  -- It is still a simple first attempt, not prediction.
-  player:castSpell('pos', q_slot.slot, target.pos)
+  local q_slot = spells.get_q_slot()
+  if q_slot then
+    -- Try 2-arg pred first (matches spell-timing example); fallback to 3-arg with origin
+    local seg = pred.linear.get_prediction(spells.Q_PRED_INPUT, target)
+      or pred.linear.get_prediction(spells.Q_PRED_INPUT, target, origin)
 
-  last_log_time = now
+    local cast_pos
+    if seg and seg.startPos and seg.endPos then
+      local dist = seg.startPos:dist(seg.endPos)
+      if dist <= q_range then
+        cast_pos = seg.endPos:to3D(target.y)
+      end
+    end
+
+    -- Fallback: cast at target when prediction fails (clamped to range)
+    if not cast_pos then
+      local target_pos = target.pos or vec3(target.x, target.y, target.z)
+      local dx = (target_pos.x or 0) - (origin.x or 0)
+      local dz = (target_pos.z or target_pos.y or 0) - (origin.z or origin.y or 0)
+      local len_sq = dx * dx + dz * dz
+      if len_sq > 0 then
+        local len = math.sqrt(len_sq)
+        local scale = math.min(1, q_range / len)
+        cast_pos = vec3(
+          (origin and origin.x or 0) + dx * scale,
+          target_pos.y or target.y,
+          (origin and (origin.z or origin.y) or 0) + dz * scale
+        )
+      end
+    end
+
+    if cast_pos then
+      if menu.debug_logs:get() and can_log_now(now) then
+        print(build_debug_message(target, q_range))
+        last_log_time = now
+      end
+      diag(menu, 'casting_q')
+      player:castSpell('pos', _Q, cast_pos)
+      return
+    end
+    diag(menu, 'no_cast_pos')
+  else
+    diag(menu, 'q_slot_nil')
+  end
+
+  -- E when Q not cast (e.g. Q on cooldown, use_q off, or prediction failed)
+  if menu.use_e:get() and spells.is_e_ready() then
+    if target:isValidTarget(e_range) then
+      player:castSpell('self', _E)
+    end
+  end
 end
 
 return M
