@@ -25,6 +25,29 @@ local ENERGY_FAIL_REASON = {
   safe_harass = 'energy_low_safe_harass',
 }
 
+local DEFAULT_STAGE4_DAMAGE_PROFILE = {
+  q = 150,
+  e = 110,
+  r = 120,
+  r_mark = 190,
+  shadow_bonus = 40,
+  kill_buffer = 25,
+}
+
+local DEFAULT_STAGE4_SAFETY_PROFILE = {
+  enemy_scan_radius = 700,
+  turret_danger_radius = 775,
+  max_extra_enemies = 2,
+}
+
+local STAGE4_BLOCK_REASONS = {
+  kill_check_failed = true,
+  r_overkill = true,
+  unsafe_turret = true,
+  too_many_enemies = true,
+  no_return_path = true,
+}
+
 local shadow_state = {
   active = false,
   swap_ready = false,
@@ -110,8 +133,161 @@ local function distance_between(a, b)
   return math.sqrt(dx * dx + dz * dz)
 end
 
+local function for_each_candidate(candidates, seen, callback)
+  if candidates == nil or callback == nil then
+    return
+  end
+
+  local function visit(candidate)
+    if candidate == nil then
+      return
+    end
+    if seen ~= nil then
+      if seen[candidate] then
+        return
+      end
+      seen[candidate] = true
+    end
+    callback(candidate)
+  end
+
+  if type(candidates) == 'table' then
+    for _, candidate in pairs(candidates) do
+      visit(candidate)
+    end
+    return
+  end
+
+  for i = 0, 40 do
+    visit(candidates[i])
+  end
+  for i = 1, 40 do
+    visit(candidates[i])
+  end
+end
+
+local function is_enemy_unit(unit)
+  if unit == nil or unit.valid == false or unit.isDead == true then
+    return false
+  end
+  if type(unit.isEnemy) == 'boolean' then
+    return unit.isEnemy
+  end
+  if player ~= nil and player.team ~= nil and unit.team ~= nil then
+    return unit.team ~= player.team
+  end
+  return true
+end
+
+local function is_enemy_hero(unit)
+  if not is_enemy_unit(unit) then
+    return false
+  end
+  if TYPE_HERO ~= nil and unit.type ~= nil and unit.type ~= TYPE_HERO then
+    return false
+  end
+  return get_position(unit) ~= nil
+end
+
+local function is_enemy_turret(unit)
+  if not is_enemy_unit(unit) then
+    return false
+  end
+  if TYPE_TURRET ~= nil and unit.type ~= nil then
+    return unit.type == TYPE_TURRET
+  end
+
+  local turret_name = string.lower(tostring(unit.charName or unit.name or ''))
+  return turret_name:find('turret', 1, true) ~= nil
+end
+
+local function get_stage4_damage_profile(spells)
+  if spells ~= nil and spells.get_stage4_damage_profile ~= nil then
+    return spells.get_stage4_damage_profile() or DEFAULT_STAGE4_DAMAGE_PROFILE
+  end
+  return DEFAULT_STAGE4_DAMAGE_PROFILE
+end
+
+local function get_stage4_safety_profile(spells)
+  if spells ~= nil and spells.get_stage4_safety_profile ~= nil then
+    return spells.get_stage4_safety_profile() or DEFAULT_STAGE4_SAFETY_PROFILE
+  end
+  return DEFAULT_STAGE4_SAFETY_PROFILE
+end
+
 local function has_known_shadow_position()
   return shadow_state.active and shadow_state.last_known_pos ~= nil
+end
+
+local function has_return_path(ctx)
+  if ctx == nil then
+    return false
+  end
+
+  return ctx.w_swap_ready == true
+    or shadow_state.swap_ready == true
+    or ctx.r_swap_ready == true
+end
+
+local function count_enemies_near(position, radius, excluded_target)
+  if position == nil or radius == nil or radius <= 0 then
+    return 0
+  end
+
+  local seen = {}
+  local count = 0
+  local function visit(candidate)
+    if candidate == excluded_target or not is_enemy_hero(candidate) then
+      return
+    end
+    local candidate_pos = get_position(candidate)
+    if candidate_pos ~= nil and distance_between(position, candidate_pos) <= radius then
+      count = count + 1
+    end
+  end
+
+  if objManager ~= nil then
+    for_each_candidate(objManager.enemies, seen, visit)
+    for_each_candidate(objManager.players, seen, visit)
+  end
+  if game ~= nil then
+    for_each_candidate(game.players, seen, visit)
+  end
+
+  return count
+end
+
+local function is_position_in_enemy_turret_range(position, radius)
+  if position == nil or radius == nil or radius <= 0 then
+    return false
+  end
+
+  local seen = {}
+  local dangerous = false
+  local function visit(candidate)
+    if dangerous or not is_enemy_turret(candidate) then
+      return
+    end
+    local turret_pos = get_position(candidate)
+    if turret_pos ~= nil and distance_between(position, turret_pos) <= radius then
+      dangerous = true
+    end
+  end
+
+  if objManager ~= nil then
+    for_each_candidate(objManager.turrets, seen, visit)
+    for_each_candidate(objManager.enemies, seen, visit)
+  end
+
+  return dangerous
+end
+
+local function get_target_health(target)
+  if target == nil then
+    return 0
+  end
+
+  return math.max(0, tonumber(target.health or target.maxHealth or 0) or 0)
 end
 
 local function build_clamped_pos(origin, target_pos, max_range)
@@ -307,6 +483,77 @@ local function can_execute_poke_after_w(ctx)
     and can_hit_q_after_w(ctx)
 end
 
+local function estimate_non_ult_damage(ctx)
+  local profile = get_stage4_damage_profile(ctx.spells)
+  local total = 0
+  local uses_shadow_setup = false
+
+  if ctx.q_enabled and ctx.q_ready and (can_hit_q(ctx) or can_hit_q_after_w(ctx)) then
+    total = total + profile.q
+    if not ctx.target:isValidTarget(ctx.q_range) then
+      uses_shadow_setup = true
+    end
+  end
+
+  if ctx.e_enabled and ctx.e_ready and (can_hit_e(ctx) or can_hit_e_after_w(ctx)) then
+    total = total + profile.e
+    if not ctx.target:isValidTarget(ctx.e_range) then
+      uses_shadow_setup = true
+    end
+  end
+
+  if uses_shadow_setup then
+    total = total + profile.shadow_bonus
+  end
+
+  return total
+end
+
+local function estimate_all_in_damage(ctx)
+  local profile = get_stage4_damage_profile(ctx.spells)
+  local total = estimate_non_ult_damage(ctx)
+  if ctx.r_ready and ctx.target:isValidTarget(ctx.r_range) then
+    total = total + profile.r + profile.r_mark
+  end
+  return total
+end
+
+local function evaluate_stage4_all_in(ctx)
+  local damage_profile = get_stage4_damage_profile(ctx.spells)
+  local safety_profile = get_stage4_safety_profile(ctx.spells)
+  local target_health = get_target_health(ctx.target)
+  local required_damage = target_health + (damage_profile.kill_buffer or 0)
+  local non_ult_damage = estimate_non_ult_damage(ctx)
+
+  if non_ult_damage >= required_damage then
+    return false, 'r_overkill'
+  end
+
+  if estimate_all_in_damage(ctx) < required_damage then
+    return false, 'kill_check_failed'
+  end
+
+  local target_pos = get_position(ctx.target)
+  if is_position_in_enemy_turret_range(ctx.origin, safety_profile.turret_danger_radius)
+    or is_position_in_enemy_turret_range(target_pos, safety_profile.turret_danger_radius) then
+    return false, 'unsafe_turret'
+  end
+
+  if count_enemies_near(ctx.origin, safety_profile.enemy_scan_radius, ctx.target) > safety_profile.max_extra_enemies then
+    return false, 'too_many_enemies'
+  end
+
+  if not has_return_path(ctx) then
+    return false, 'no_return_path'
+  end
+
+  return true, nil
+end
+
+local function is_stage4_block_reason(reason)
+  return reason ~= nil and STAGE4_BLOCK_REASONS[reason] == true
+end
+
 local function is_waiting_for_shadow_settle(ctx)
   if ctx == nil then
     return false
@@ -451,6 +698,8 @@ local function build_context(menu, spells, targeting, orb, pred)
     w_ready = spells.is_w_ready(),
     e_ready = spells.is_e_ready(),
     r_ready = spells.is_r_ready(),
+    w_swap_ready = spells.is_w_swap_ready ~= nil and spells.is_w_swap_ready() or false,
+    r_swap_ready = spells.is_r_swap_ready ~= nil and spells.is_r_swap_ready() or false,
   }, nil
 end
 
@@ -532,6 +781,11 @@ local function attempt_r(ctx)
     return false, 'r_out_of_range'
   end
 
+  local can_all_in, block_reason = evaluate_stage4_all_in(ctx)
+  if not can_all_in then
+    return false, block_reason
+  end
+
   player:castSpell('obj', _R, ctx.target)
   return true, 'r_casted'
 end
@@ -573,6 +827,9 @@ local function execute_all_in_branch(ctx)
   if r_casted then
     return true, r_reason
   end
+  if is_stage4_block_reason(r_reason) then
+    emit_reason(ctx.menu, r_reason, ctx.now)
+  end
 
   if needs_w_setup(ctx) then
     local w_casted, w_reason = attempt_w(ctx)
@@ -613,7 +870,12 @@ local function execute_safe_harass_branch(ctx)
 end
 
 local function select_auto_branch(ctx)
-  local prefers_all_in = ctx.r_ready and ctx.target:isValidTarget(ctx.r_range)
+  local all_in_ready = ctx.r_ready and ctx.target:isValidTarget(ctx.r_range)
+  local prefers_all_in = false
+  local all_in_block_reason = nil
+  if all_in_ready then
+    prefers_all_in, all_in_block_reason = evaluate_stage4_all_in(ctx)
+  end
   local prefers_poke = can_execute_poke_now(ctx)
     or can_execute_poke_after_w(ctx)
 
@@ -628,6 +890,22 @@ local function select_auto_branch(ctx)
       return BRANCH_SAFE_HARASS, 'fallback_safe_harass'
     end
     return BRANCH_ALL_IN, 'preferred_all_in'
+  end
+
+  if all_in_ready and all_in_block_reason ~= nil then
+    if prefers_poke then
+      if has_branch_energy(ctx, BRANCH_POKE) then
+        return BRANCH_POKE, 'fallback_poke_' .. all_in_block_reason
+      end
+      if has_branch_energy(ctx, BRANCH_SAFE_HARASS) then
+        return BRANCH_SAFE_HARASS, 'fallback_safe_harass_' .. all_in_block_reason
+      end
+      return BRANCH_POKE, 'preferred_poke_' .. all_in_block_reason
+    end
+    if has_branch_energy(ctx, BRANCH_SAFE_HARASS) then
+      return BRANCH_SAFE_HARASS, 'fallback_safe_harass_' .. all_in_block_reason
+    end
+    return BRANCH_SAFE_HARASS, 'preferred_safe_harass_' .. all_in_block_reason
   end
 
   if prefers_poke then

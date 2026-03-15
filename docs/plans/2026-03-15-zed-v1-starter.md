@@ -1,121 +1,20 @@
-# Zed V1 Starter Implementation Plan
+# Zed Gameplay Roadmap
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build a minimal Hanbot starter scaffold for Zed that can draw Q range and log when Q would be cast on a valid selected target.
+**Goal:** Track the current implementation roadmap for Zed after the project moved beyond the original starter scaffold.
 
-**Architecture:** `main.lua` loads the module files and registers tick and draw callbacks. The other files stay focused on one job each so a beginner can trace the flow from menu input to spell checks to target validation and drawing.
+**Architecture:** `main.lua` stays as wiring, `logic.lua` owns branch selection and execution, `spells.lua` keeps static spell/config data, and follow-up stages harden engage logic, shadow behavior, targeting quality, and validation.
 
 **Tech Stack:** Lua, Hanbot documented callbacks, Hanbot menu API, Hanbot object/spell APIs
-
----
-
-### Task 1: Create starter metadata and menu
-
-**Files:**
-- Create: `header.lua`
-- Create: `menu.lua`
-
-**Step 1: Write the file contents**
-
-- `header.lua`: plugin id, name, Zed-only load check
-- `menu.lua`: one `Use Q` boolean toggle
-
-**Step 2: Verify the design against docs**
-
-Check that:
-- `player.charName` is documented
-- `menu(...)`, `menu:header(...)`, and `menu:boolean(...)` match the example pattern
-
-**Step 3: Keep the code minimal**
-
-- No extra toggles
-- No combo keys
-- No casting
-
-### Task 2: Create Q helpers and targeting
-
-**Files:**
-- Create: `spells.lua`
-- Create: `targeting.lua`
-
-**Step 1: Add Q slot helpers**
-
-- Expose `get_q_slot()`
-- Expose `is_q_ready()`
-- Keep readiness logic in one helper for easy adjustment after live testing
-
-**Step 2: Add selected-target validation**
-
-- Read `game.selectedTarget`
-- Reject nil or invalid targets
-- Validate with `target:isValidTarget(q_range)`
-
-**Step 3: Keep uncertainty explicit**
-
-- Mark `spell_slot.state` semantics as not fully confirmed
-- Mark Zed Q range as a value to verify in client
-
-### Task 3: Create logic, draw, and entry point
-
-**Files:**
-- Create: `logic.lua`
-- Create: `draw.lua`
-- Create: `main.lua`
-
-**Step 1: Add tick logic**
-
-- Check menu toggle
-- Check Q readiness
-- Check target
-- Log `would cast Q on target`
-- Throttle logs with `game.time`
-
-**Step 2: Add draw logic**
-
-- Only draw the Q range
-- Avoid heavy calculations in draw
-
-**Step 3: Wire the callbacks**
-
-- Load all modules with `module.load(...)`
-- Register `cb.tick`
-- Register `cb.draw`
-
-### Task 4: Verify edited files
-
-**Files:**
-- Verify: `header.lua`
-- Verify: `menu.lua`
-- Verify: `main.lua`
-- Verify: `spells.lua`
-- Verify: `targeting.lua`
-- Verify: `logic.lua`
-- Verify: `draw.lua`
-
-**Step 1: Run available lint diagnostics**
-
-Use the editor diagnostics for the edited files.
-
-**Step 2: Re-read the code**
-
-Confirm:
-- no cast call exists
-- only documented Hanbot APIs are used
-- uncertainty is labeled where needed
-
-**Step 3: Report status honestly**
-
-- State what was verified
-- State what still requires in-client testing
 
 ---
 
 ## Post-V1 Roadmap (Champion-Aligned)
 
 The current codebase has already moved beyond the original v1 no-cast scope.
-This roadmap defines the next implementation stages around Zed's real gameplay
-identity: shadow timing, burst windows, and safe exits.
+The deprecated starter task checklist was removed so this document now tracks the gameplay roadmap only.
+These stages focus on Zed's real gameplay identity: shadow timing, burst windows, and safe exits.
 
 ### Stage 2: Reliability Hardening
 

@@ -25,6 +25,21 @@ local DEFAULT_BRANCH_ENERGY_GATES = {
   safe_harass = 75,
 }
 
+local STAGE4_DAMAGE_PROFILE = {
+  q = 150,
+  e = 110,
+  r = 120,
+  r_mark = 190,
+  shadow_bonus = 40,
+  kill_buffer = 25,
+}
+
+local STAGE4_SAFETY_PROFILE = {
+  enemy_scan_radius = 700,
+  turret_danger_radius = 775,
+  max_extra_enemies = 2,
+}
+
 -- Zed Q (Razor Shuriken) – linear skillshot for pred.linear.get_prediction.
 M.Q_PRED_INPUT = {
   delay = 0.25,
@@ -118,6 +133,14 @@ end
 
 function M.get_branch_energy_gate(branch)
   return DEFAULT_BRANCH_ENERGY_GATES[branch] or 0
+end
+
+function M.get_stage4_damage_profile()
+  return STAGE4_DAMAGE_PROFILE
+end
+
+function M.get_stage4_safety_profile()
+  return STAGE4_SAFETY_PROFILE
 end
 
 function M.get_current_energy()
