@@ -56,8 +56,8 @@ function M.is_q_ready()
   -- semantics are not clearly explained in the docs.
   -- So this v1 check is still an approximation:
   -- learned + not empty + not on cooldown.
-  -- That is good enough for scaffold debugging, but it may need
-  -- refinement later when real casting is added and tested in client.
+  -- That is good enough for this first real cast step, but it may
+  -- still need refinement after in-client cast testing.
   return true
 end
 

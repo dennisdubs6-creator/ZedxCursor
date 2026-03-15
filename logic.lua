@@ -35,7 +35,7 @@ local function build_debug_message(target, q_range)
   local target_name = get_target_name(target)
 
   return string.format(
-    'would cast Q on target: %s | q_ready=true | q_range=%d',
+    'attempting Q cast on target: %s | q_ready=true | q_range=%d',
     target_name,
     q_range
   )
@@ -58,8 +58,9 @@ function M.on_tick(menu, spells, targeting)
 
   local q_range = spells.get_q_range()
   local target = targeting.get_q_target(q_range)
+  local q_slot = spells.get_q_slot()
 
-  if target == nil then
+  if target == nil or q_slot == nil then
     return
   end
 
@@ -71,13 +72,17 @@ function M.on_tick(menu, spells, targeting)
     return
   end
 
-  if not menu.debug_logs:get() then
-    return
+  if menu.debug_logs:get() then
+    print(build_debug_message(target, q_range))
   end
 
-  -- We do not store the target object after this point.
-  -- v1 only reports that a cast would happen.
-  print(build_debug_message(target, q_range))
+  -- This is the smallest real cast step:
+  -- cast Q as a position spell at the selected target's current position.
+  -- This uses documented APIs only:
+  -- `player:castSpell('pos', slot, vec3)` plus `target.pos`.
+  -- It is still a simple first attempt, not prediction.
+  player:castSpell('pos', q_slot.slot, target.pos)
+
   last_log_time = now
 end
 

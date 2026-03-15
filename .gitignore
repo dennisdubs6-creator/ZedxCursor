@@ -1,0 +1,196 @@
+docs/sdk-main/docs.html
+docs/sdk-main/docs/404.html
+docs/sdk-main/docs/assets/app.DJLJQ-gk.js
+docs/sdk-main/docs/assets/best-practices.md.Gdc2ngPl.js
+docs/sdk-main/docs/assets/best-practices.md.Gdc2ngPl.lean.js
+docs/sdk-main/docs/assets/chunks/@localSearchIndexroot.C0Q1DGwS.js
+docs/sdk-main/docs/assets/chunks/framework.qZdB8MUC.js
+docs/sdk-main/docs/assets/chunks/theme.BrH_gl51.js
+docs/sdk-main/docs/assets/chunks/VPLocalSearchBox.BV7aOJfU.js
+docs/sdk-main/docs/assets/examples.md.D7_sN00J.js
+docs/sdk-main/docs/assets/examples.md.D7_sN00J.lean.js
+docs/sdk-main/docs/assets/globals.md.Dl2inJmk.js
+docs/sdk-main/docs/assets/globals.md.Dl2inJmk.lean.js
+docs/sdk-main/docs/assets/index.md.Dn2HmZB0.js
+docs/sdk-main/docs/assets/index.md.Dn2HmZB0.lean.js
+docs/sdk-main/docs/assets/inter-italic-cyrillic-ext.r48I6akx.woff2
+docs/sdk-main/docs/assets/inter-italic-cyrillic.By2_1cv3.woff2
+docs/sdk-main/docs/assets/inter-italic-greek-ext.1u6EdAuj.woff2
+docs/sdk-main/docs/assets/inter-italic-greek.DJ8dCoTZ.woff2
+docs/sdk-main/docs/assets/inter-italic-latin-ext.CN1xVJS-.woff2
+docs/sdk-main/docs/assets/inter-italic-latin.C2AdPX0b.woff2
+docs/sdk-main/docs/assets/inter-italic-vietnamese.BSbpV94h.woff2
+docs/sdk-main/docs/assets/inter-roman-cyrillic-ext.BBPuwvHQ.woff2
+docs/sdk-main/docs/assets/inter-roman-cyrillic.C5lxZ8CY.woff2
+docs/sdk-main/docs/assets/inter-roman-greek-ext.CqjqNYQ-.woff2
+docs/sdk-main/docs/assets/inter-roman-greek.BBVDIX6e.woff2
+docs/sdk-main/docs/assets/inter-roman-latin-ext.4ZJIpNVo.woff2
+docs/sdk-main/docs/assets/inter-roman-latin.Di8DUHzh.woff2
+docs/sdk-main/docs/assets/inter-roman-vietnamese.BjW4sHH5.woff2
+docs/sdk-main/docs/assets/libraries.md.DlTn56Wq.js
+docs/sdk-main/docs/assets/libraries.md.DlTn56Wq.lean.js
+docs/sdk-main/docs/assets/lua.md.BNp1FFgi.js
+docs/sdk-main/docs/assets/lua.md.BNp1FFgi.lean.js
+docs/sdk-main/docs/assets/math.md.BuWp85A5.js
+docs/sdk-main/docs/assets/math.md.BuWp85A5.lean.js
+docs/sdk-main/docs/assets/modules.md.Be6mFhov.js
+docs/sdk-main/docs/assets/modules.md.Be6mFhov.lean.js
+docs/sdk-main/docs/assets/objects.md.BXDm2FFT.js
+docs/sdk-main/docs/assets/objects.md.BXDm2FFT.lean.js
+docs/sdk-main/docs/assets/paid-script-conditions.md.B_ard-Pk.js
+docs/sdk-main/docs/assets/paid-script-conditions.md.B_ard-Pk.lean.js
+docs/sdk-main/docs/assets/shards.md.DJnpw_Qz.js
+docs/sdk-main/docs/assets/shards.md.DJnpw_Qz.lean.js
+docs/sdk-main/docs/assets/style.CI9BPrt8.css
+docs/sdk-main/docs/best-practices.html
+docs/sdk-main/docs/examples.html
+docs/sdk-main/docs/globals.html
+docs/sdk-main/docs/hashmap.json
+docs/sdk-main/docs/index.html
+docs/sdk-main/docs/libraries.html
+docs/sdk-main/docs/lua.html
+docs/sdk-main/docs/math.html
+docs/sdk-main/docs/modules.html
+docs/sdk-main/docs/objects.html
+docs/sdk-main/docs/paid-script-conditions.html
+docs/sdk-main/docs/resources/banner.gif
+docs/sdk-main/docs/shards.html
+docs/sdk-main/docs/vp-icons.css
+docs/sdk-main/favicon.ico
+docs/sdk-main/ide-helper/globals.lua
+docs/sdk-main/ide-helper/libraries/cb.lua
+docs/sdk-main/ide-helper/libraries/chat.lua
+docs/sdk-main/ide-helper/libraries/console.lua
+docs/sdk-main/ide-helper/libraries/core.lua
+docs/sdk-main/ide-helper/libraries/game.lua
+docs/sdk-main/ide-helper/libraries/graphics.lua
+docs/sdk-main/ide-helper/libraries/hanbot.lua
+docs/sdk-main/ide-helper/libraries/input.lua
+docs/sdk-main/ide-helper/libraries/keyboard.lua
+docs/sdk-main/ide-helper/libraries/md5.lua
+docs/sdk-main/ide-helper/libraries/memory.lua
+docs/sdk-main/ide-helper/libraries/menu.lua
+docs/sdk-main/ide-helper/libraries/minimap.lua
+docs/sdk-main/ide-helper/libraries/module.lua
+docs/sdk-main/ide-helper/libraries/navmesh.lua
+docs/sdk-main/ide-helper/libraries/network.lua
+docs/sdk-main/ide-helper/libraries/objManager.lua
+docs/sdk-main/ide-helper/libraries/ping.lua
+docs/sdk-main/ide-helper/libraries/shadereffect.lua
+docs/sdk-main/ide-helper/math/clipper.lua
+docs/sdk-main/ide-helper/math/clipper2.lua
+docs/sdk-main/ide-helper/math/mathf.lua
+docs/sdk-main/ide-helper/math/vec2.lua
+docs/sdk-main/ide-helper/math/vec3.lua
+docs/sdk-main/ide-helper/math/vec4.lua
+docs/sdk-main/ide-helper/modules/evade.lua
+docs/sdk-main/ide-helper/modules/orb.lua
+docs/sdk-main/ide-helper/modules/pred.lua
+docs/sdk-main/ide-helper/modules/ts.lua
+docs/sdk-main/ide-helper/objects/base.lua
+docs/sdk-main/ide-helper/objects/buff.lua
+docs/sdk-main/ide-helper/objects/camp.lua
+docs/sdk-main/ide-helper/objects/hero.lua
+docs/sdk-main/ide-helper/objects/inhib.lua
+docs/sdk-main/ide-helper/objects/minion.lua
+docs/sdk-main/ide-helper/objects/missile.lua
+docs/sdk-main/ide-helper/objects/nexus.lua
+docs/sdk-main/ide-helper/objects/particle.lua
+docs/sdk-main/ide-helper/objects/path.lua
+docs/sdk-main/ide-helper/objects/spell.lua
+docs/sdk-main/ide-helper/objects/spell_info.lua
+docs/sdk-main/ide-helper/objects/spell_slot.lua
+docs/sdk-main/ide-helper/objects/spell_static.lua
+docs/sdk-main/ide-helper/objects/turret.lua
+docs/sdk-main/index.html
+docs/sdk-main/opensource/Assassin'sAIO/Akali.lua
+docs/sdk-main/opensource/Assassin'sAIO/common.lua
+docs/sdk-main/opensource/Assassin'sAIO/header.lua
+docs/sdk-main/opensource/Assassin'sAIO/Leblanc.lua
+docs/sdk-main/opensource/Assassin'sAIO/main.lua
+docs/sdk-main/opensource/Assassin'sAIO/menu.lua
+docs/sdk-main/opensource/Assassin'sAIO/Qiyana.lua
+docs/sdk-main/opensource/Assassin'sAIO/Rengar.lua
+docs/sdk-main/opensource/Assassin'sAIO/Talon.lua
+docs/sdk-main/opensource/beasty syndra/draw/chat.lua
+docs/sdk-main/opensource/beasty syndra/draw/circle.lua
+docs/sdk-main/opensource/beasty syndra/draw/color.lua
+docs/sdk-main/opensource/beasty syndra/draw/info.lua
+docs/sdk-main/opensource/beasty syndra/draw/stacks.lua
+docs/sdk-main/opensource/beasty syndra/draw/text.lua
+docs/sdk-main/opensource/beasty syndra/draw/timer.lua
+docs/sdk-main/opensource/beasty syndra/header.lua
+docs/sdk-main/opensource/beasty syndra/main.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/auto_e.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/core.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/dmg.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/e_on_q.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/e_on_tar.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/main.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/menu.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/q.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/q_e.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/r.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/spells.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/sphere_manager.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/w.lua
+docs/sdk-main/opensource/beasty syndra/Syndra/w_cast.lua
+docs/sdk-main/opensource/coding tips/spell timing.jpg
+docs/sdk-main/opensource/coding tips/spell timing.lua
+docs/sdk-main/opensource/coding tips/spell timing.txt
+docs/sdk-main/opensource/DivineLib/b64.lua
+docs/sdk-main/opensource/DivineLib/bigint.lua
+docs/sdk-main/opensource/DivineLib/box.lua
+docs/sdk-main/opensource/DivineLib/bugsplat.lua
+docs/sdk-main/opensource/DivineLib/header.lua
+docs/sdk-main/opensource/DivineLib/item.lua
+docs/sdk-main/opensource/DivineLib/itemData.lua
+docs/sdk-main/opensource/DivineLib/json.lua
+docs/sdk-main/opensource/DivineLib/main.lua
+docs/sdk-main/opensource/DivineLib/md5.lua
+docs/sdk-main/opensource/DivineLib/MD5SUM
+docs/sdk-main/opensource/DivineLib/net.lua
+docs/sdk-main/opensource/DivineLib/notify.lua
+docs/sdk-main/opensource/DivineLib/orb.lua
+docs/sdk-main/opensource/DivineLib/rsa.lua
+docs/sdk-main/opensource/DivineLib/salsa20.lua
+docs/sdk-main/opensource/DivineLib/struct.lua
+docs/sdk-main/opensource/DivineLib/table.lua
+docs/sdk-main/opensource/DivineLib/util.lua
+docs/sdk-main/opensource/events.lua
+docs/sdk-main/opensource/for bypass developer.cpp
+docs/sdk-main/opensource/gagong riven/core/ai.lua
+docs/sdk-main/opensource/gagong riven/core/draw.lua
+docs/sdk-main/opensource/gagong riven/core/main.lua
+docs/sdk-main/opensource/gagong riven/header.lua
+docs/sdk-main/opensource/gagong riven/item/crescent_wrapper.lua
+docs/sdk-main/opensource/gagong riven/main.lua
+docs/sdk-main/opensource/gagong riven/menu.lua
+docs/sdk-main/opensource/gagong riven/pred/aa.lua
+docs/sdk-main/opensource/gagong riven/pred/e.lua
+docs/sdk-main/opensource/gagong riven/pred/e_flash_q.lua
+docs/sdk-main/opensource/gagong riven/pred/e_flash_w.lua
+docs/sdk-main/opensource/gagong riven/pred/e_q.lua
+docs/sdk-main/opensource/gagong riven/pred/e_w.lua
+docs/sdk-main/opensource/gagong riven/pred/flash_q.lua
+docs/sdk-main/opensource/gagong riven/pred/flash_w.lua
+docs/sdk-main/opensource/gagong riven/pred/main.lua
+docs/sdk-main/opensource/gagong riven/pred/push.lua
+docs/sdk-main/opensource/gagong riven/pred/q.lua
+docs/sdk-main/opensource/gagong riven/pred/r1.lua
+docs/sdk-main/opensource/gagong riven/pred/r2.lua
+docs/sdk-main/opensource/gagong riven/pred/r2_dmg.lua
+docs/sdk-main/opensource/gagong riven/pred/w.lua
+docs/sdk-main/opensource/gagong riven/spell/e.lua
+docs/sdk-main/opensource/gagong riven/spell/flash.lua
+docs/sdk-main/opensource/gagong riven/spell/main.lua
+docs/sdk-main/opensource/gagong riven/spell/q.lua
+docs/sdk-main/opensource/gagong riven/spell/r1.lua
+docs/sdk-main/opensource/gagong riven/spell/r2.lua
+docs/sdk-main/opensource/gagong riven/spell/w.lua
+docs/sdk-main/opensource/hello world/header.lua
+docs/sdk-main/opensource/hello world/main.lua
+docs/sdk-main/opensource/menu example/header.lua
+docs/sdk-main/opensource/menu example/main.lua
+docs/sdk-main/opensource/menu example/menu.lua
+docs/sdk-main/opensource/shadereffect_dx11.lua

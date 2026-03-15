@@ -14,9 +14,8 @@ function M.get_q_target(q_range)
   -- v1 uses the documented example pattern of reading
   -- the currently selected target rather than inventing
   -- a target selector API.
-  -- `game.selectedTarget` still needs in-client confirmation because
-  -- it appears in an example, but is not clearly described in a
-  -- dedicated reference section that I found.
+  -- Hanbot's `player:castSpell(...)` docs include
+  -- `game.selectedTarget` in the cast example.
   local target = game.selectedTarget
 
   if target == nil then
