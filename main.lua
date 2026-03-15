@@ -39,7 +39,8 @@ cb.add(cb.tick, function()
     diag_last = now
     print(string.format('[Zedx] enable_combo=%s combo_active=%s', tostring(menu.enable_combo:get()), tostring(combo_active)))
   end
-  if menu.enable_combo:get() and (combo_active or diag) then
+  -- Never let diagnostics bypass combo gating; debug should be read-only.
+  if menu.enable_combo:get() and combo_active then
     logic.on_tick(menu, spells, targeting, orb, pred)
   end
 end)
