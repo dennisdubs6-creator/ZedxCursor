@@ -91,7 +91,7 @@ local function get_position(obj)
   end
   if obj.pos ~= nil then
     return obj.pos
-  end
+end
   if obj.x ~= nil and obj.y ~= nil and obj.z ~= nil then
     return vec3(obj.x, obj.y, obj.z)
   end
@@ -175,9 +175,6 @@ local function is_diag_enabled(menu)
     or (menu.debug_logs and menu.debug_logs:get())
 end
 
--- Check whether stage-3 debug logging is enabled in the provided menu.
--- @param menu Menu table which may contain `debug_stage3` or `debug_logs` boolean controls (may be nil).
--- @return `true` if either `menu.debug_stage3:get()` or `menu.debug_logs:get()` is truthy, `false` otherwise.
 local function is_stage3_debug_enabled(menu)
   if menu == nil then
     return false
@@ -408,6 +405,10 @@ end
 -- @param ctx Context table containing target, ranges, spell readiness, and shadow state used to decide adjustments.
 -- @param branch Branch identifier (e.g. BRANCH_POKE, BRANCH_ALL_IN) whose gate should be computed.
 -- @return The numeric energy gate value to use for the given branch.
+-- Compute the effective energy gate for a combo branch by combining the menu-configured gate with spell-configured branch gates and situational modifiers.
+-- @param ctx Runtime context containing menu, spells, target, readiness flags, and shadow state.
+-- @param branch One of the branch identifiers (e.g., BRANCH_POKE, BRANCH_ALL_IN, BRANCH_SAFE_HARASS).
+-- @return The numeric energy threshold that must be met to execute the given branch; this value may be raised or lowered relative to the menu gate based on branch-specific spell gates and current combat/shadow conditions.
 local function get_effective_energy_gate(ctx, branch)
   local gate = get_menu_energy_gate(ctx, branch)
   if branch == BRANCH_POKE then
@@ -416,6 +417,10 @@ local function get_effective_energy_gate(ctx, branch)
     end
     if can_execute_poke_now(ctx) then
       return math.min(gate, 125)
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
+    end
+    if can_execute_poke_now(ctx) then
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
     end
   end
   if branch == BRANCH_ALL_IN then
@@ -427,6 +432,13 @@ local function get_effective_energy_gate(ctx, branch)
     end
     if needs_w_setup(ctx) then
       return math.max(gate, 165)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
+    end
+    if has_known_shadow_position() then
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
+    end
+    if needs_w_setup(ctx) then
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
   end
   return gate
@@ -681,6 +693,124 @@ local function choose_reason(default_reason, ...)
     end
   end
   return default_reason
+end
+
+local function execute_poke_branch(ctx)
+  if needs_w_setup(ctx) then
+    return attempt_w(ctx)
+  end
+
+  if is_waiting_for_shadow_settle(ctx) then
+    return false, 'w_shadow_settling'
+  end
+
+  local e_casted, e_reason = attempt_e(ctx, true)
+  if e_casted then
+    return true, e_reason
+  end
+
+  local q_casted, q_reason = attempt_q(ctx)
+  if q_casted then
+    return true, q_reason
+  end
+
+  return false, choose_reason('poke_no_action', e_reason, q_reason)
+end
+
+local function execute_all_in_branch(ctx)
+  local r_casted, r_reason = attempt_r(ctx)
+  if r_casted then
+    return true, r_reason
+  end
+
+  if needs_w_setup(ctx) then
+    local w_casted, w_reason = attempt_w(ctx)
+    if w_casted then
+      return true, w_reason
+    end
+  end
+
+  if is_waiting_for_shadow_settle(ctx) then
+    return false, 'w_shadow_settling'
+  end
+
+  local e_casted, e_reason = attempt_e(ctx, true)
+  if e_casted then
+    return true, e_reason
+  end
+
+  local q_casted, q_reason = attempt_q(ctx)
+  if q_casted then
+    return true, q_reason
+  end
+
+  return false, choose_reason('all_in_no_action', r_reason, e_reason, q_reason)
+end
+
+local function execute_safe_harass_branch(ctx)
+  local q_casted, q_reason = attempt_q(ctx)
+  if q_casted then
+    return true, q_reason
+  end
+
+  local e_casted, e_reason = attempt_e(ctx, true)
+  if e_casted then
+    return true, e_reason
+  end
+
+  return false, choose_reason('safe_harass_no_action', e_reason, q_reason)
+end
+
+local function select_auto_branch(ctx)
+  local prefers_all_in = ctx.r_ready and ctx.target:isValidTarget(ctx.r_range)
+  local prefers_poke = can_execute_poke_now(ctx)
+    or can_execute_poke_after_w(ctx)
+
+  if prefers_all_in then
+    if has_branch_energy(ctx, BRANCH_ALL_IN) then
+      return BRANCH_ALL_IN, 'auto_all_in'
+    end
+    if prefers_poke and has_branch_energy(ctx, BRANCH_POKE) then
+      return BRANCH_POKE, 'fallback_poke'
+    end
+    if has_branch_energy(ctx, BRANCH_SAFE_HARASS) then
+      return BRANCH_SAFE_HARASS, 'fallback_safe_harass'
+    end
+    return BRANCH_ALL_IN, 'preferred_all_in'
+  end
+
+  if prefers_poke then
+    if has_branch_energy(ctx, BRANCH_POKE) then
+      return BRANCH_POKE, 'auto_poke'
+    end
+    if has_branch_energy(ctx, BRANCH_SAFE_HARASS) then
+      return BRANCH_SAFE_HARASS, 'fallback_safe_harass'
+    end
+    return BRANCH_POKE, 'preferred_poke'
+  end
+
+  if has_branch_energy(ctx, BRANCH_SAFE_HARASS) then
+    return BRANCH_SAFE_HARASS, 'auto_safe_harass'
+  end
+
+  return BRANCH_SAFE_HARASS, 'preferred_safe_harass'
+end
+
+local function select_combo_branch(ctx)
+  local manual_branch = get_manual_branch(ctx.menu)
+  if manual_branch ~= nil then
+    return manual_branch, 'manual_override'
+  end
+
+  return select_auto_branch(ctx)
+end
+
+local function validate_branch_energy(ctx, branch)
+  if has_branch_energy(ctx, branch) then
+    return true, nil
+  end
+
+  return false, ENERGY_FAIL_REASON[branch] or 'energy_low_unknown'
 end
 
 -- Attempts the "poke" branch: performs W setup if required, waits for shadow settle when necessary, then tries E (allowing shadow-range) and Q in that order.

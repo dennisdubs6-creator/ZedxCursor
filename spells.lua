@@ -17,6 +17,7 @@ local W_RANGE = 650
 local E_RANGE = 290
 local R_RANGE = 625
 local W_SHADOW_LIFETIME = 4.50
+local W_SHADOW_LIFETIME = 5.25
 local W_SHADOW_SETTLE_DELAY = 0.10
 
 local DEFAULT_BRANCH_ENERGY_GATES = {
@@ -141,6 +142,16 @@ end
 
 -- Provides the configured settle delay for W shadow after placement.
 -- @return The settle delay in seconds (number).
+end
+
+function M.get_r_range()
+  return R_RANGE
+end
+
+function M.get_w_shadow_lifetime()
+  return W_SHADOW_LIFETIME
+end
+
 function M.get_w_shadow_settle_delay()
   return W_SHADOW_SETTLE_DELAY
 end
