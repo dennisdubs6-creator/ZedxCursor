@@ -7,11 +7,23 @@
 local M = {}
 
 local Q_SLOT = _Q
+local W_SLOT = _W
 local E_SLOT = _E
+local R_SLOT = _R
 
 -- Champion data (verify in-client during testing).
 local Q_RANGE = 900
+local W_RANGE = 650
 local E_RANGE = 290
+local R_RANGE = 625
+local W_SHADOW_LIFETIME = 4.50
+local W_SHADOW_SETTLE_DELAY = 0.10
+
+local DEFAULT_BRANCH_ENERGY_GATES = {
+  poke = 165,
+  all_in = 125,
+  safe_harass = 75,
+}
 
 -- Zed Q (Razor Shuriken) – linear skillshot for pred.linear.get_prediction.
 M.Q_PRED_INPUT = {
@@ -20,6 +32,33 @@ M.Q_PRED_INPUT = {
   width = 50,
   boundingRadiusMod = 1,
 }
+
+local function has_learned_spell(slot)
+  return slot ~= nil and slot.level > 0
+end
+
+local function is_slot_ready(slot)
+  if slot == nil then
+    return false
+  end
+  if not has_learned_spell(slot) then
+    return false
+  end
+  if not slot.isNotEmpty then
+    return false
+  end
+  if slot.cooldown > 0 then
+    return false
+  end
+  return true
+end
+
+local function get_spell_name(slot)
+  if slot == nil or slot.name == nil then
+    return ''
+  end
+  return tostring(slot.name)
+end
 
 function M.get_q_slot()
   -- `player:spellSlot(_Q)` is documented and returns the current
@@ -36,6 +75,17 @@ function M.get_q_range()
   return Q_RANGE
 end
 
+function M.get_w_slot()
+  if player == nil then
+    return nil
+  end
+  return player:spellSlot(W_SLOT)
+end
+
+function M.get_w_range()
+  return W_RANGE
+end
+
 function M.get_e_slot()
   if player == nil then
     return nil
@@ -47,28 +97,56 @@ function M.get_e_range()
   return E_RANGE
 end
 
-local function has_learned_q(q_slot)
-  return q_slot ~= nil and q_slot.level > 0
+function M.get_r_slot()
+  if player == nil then
+    return nil
+  end
+  return player:spellSlot(R_SLOT)
+end
+
+function M.get_r_range()
+  return R_RANGE
+end
+
+function M.get_w_shadow_lifetime()
+  return W_SHADOW_LIFETIME
+end
+
+function M.get_w_shadow_settle_delay()
+  return W_SHADOW_SETTLE_DELAY
+end
+
+function M.get_branch_energy_gate(branch)
+  return DEFAULT_BRANCH_ENERGY_GATES[branch] or 0
+end
+
+function M.get_current_energy()
+  if player == nil then
+    return 0
+  end
+
+  -- In Hanbot runtimes, `par` is the most reliable generic resource field
+  -- for energy users, while `mana` remains a safe fallback.
+  if player.par ~= nil then
+    return player.par
+  end
+
+  return player.mana or 0
+end
+
+function M.get_max_energy()
+  if player == nil then
+    return 0
+  end
+  if player.maxPar ~= nil then
+    return player.maxPar
+  end
+  return player.maxMana or 0
 end
 
 function M.is_q_ready()
   local q_slot = M.get_q_slot()
-
-  if q_slot == nil then
-    return false
-  end
-
-  if not has_learned_q(q_slot) then
-    return false
-  end
-
-  -- If the slot is empty, we should not treat it as ready.
-  if not q_slot.isNotEmpty then
-    return false
-  end
-
-  -- Cooldown is documented and easy to reason about.
-  if q_slot.cooldown > 0 then
+  if not is_slot_ready(q_slot) then
     return false
   end
 
@@ -81,21 +159,52 @@ function M.is_q_ready()
   return true
 end
 
+function M.is_w_ready()
+  return is_slot_ready(M.get_w_slot())
+end
+
 function M.is_e_ready()
-  local e_slot = M.get_e_slot()
-  if e_slot == nil then
+  return is_slot_ready(M.get_e_slot())
+end
+
+function M.is_r_ready()
+  return is_slot_ready(M.get_r_slot())
+end
+
+function M.get_w_spell_name()
+  return get_spell_name(M.get_w_slot())
+end
+
+function M.get_r_spell_name()
+  return get_spell_name(M.get_r_slot())
+end
+
+function M.is_w_swap_ready()
+  local w_slot = M.get_w_slot()
+  if w_slot == nil then
     return false
   end
-  if e_slot.level <= 0 then
+
+  local spell_name = string.lower(get_spell_name(w_slot))
+  if spell_name == 'zedw2' or spell_name:find('w2', 1, true) ~= nil then
+    return true
+  end
+
+  return (w_slot.toggleState or 0) ~= 0
+end
+
+function M.is_r_swap_ready()
+  local r_slot = M.get_r_slot()
+  if r_slot == nil then
     return false
   end
-  if not e_slot.isNotEmpty then
-    return false
+
+  local spell_name = string.lower(get_spell_name(r_slot))
+  if spell_name == 'zedr2' or spell_name:find('r2', 1, true) ~= nil then
+    return true
   end
-  if e_slot.cooldown > 0 then
-    return false
-  end
-  return true
+
+  return (r_slot.toggleState or 0) ~= 0
 end
 
 return M
