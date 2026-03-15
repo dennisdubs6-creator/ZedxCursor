@@ -1,4 +1,6 @@
 ---@diagnostic disable: undefined-global
+-- Hanbot provides globals like `player` and `_Q` at runtime.
+-- This hint only avoids editor false positives.
 -- spells.lua
 -- This file owns spell-related helpers for Zed.
 
@@ -11,6 +13,8 @@ local Q_SLOT = _Q
 local Q_RANGE = 900
 
 function M.get_q_slot()
+  -- `player:spellSlot(_Q)` is documented and returns the current
+  -- spell slot object for Q.
   if player == nil then
     return nil
   end
@@ -19,6 +23,7 @@ function M.get_q_slot()
 end
 
 function M.get_q_range()
+  -- Keep the range in one place so it is easy to test and adjust later.
   return Q_RANGE
 end
 
@@ -49,8 +54,10 @@ function M.is_q_ready()
 
   -- `spell_slot.state` is documented, but its exact ready/not-ready
   -- semantics are not clearly explained in the docs.
-  -- Keep the readiness logic isolated here so we can refine it
-  -- after in-client testing without touching the rest of the scaffold.
+  -- So this v1 check is still an approximation:
+  -- learned + not empty + not on cooldown.
+  -- That is good enough for scaffold debugging, but it may need
+  -- refinement later when real casting is added and tested in client.
   return true
 end
 

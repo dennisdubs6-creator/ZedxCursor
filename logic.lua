@@ -1,4 +1,6 @@
 ---@diagnostic disable: undefined-global
+-- Hanbot provides globals like `game` at runtime.
+-- This hint only avoids editor false positives.
 -- logic.lua
 -- This file owns the per-tick gameplay decision flow.
 
@@ -11,6 +13,34 @@ local function can_log_now(now)
   return now ~= nil and (now - last_log_time) >= LOG_THROTTLE_SECONDS
 end
 
+local function get_target_name(target)
+  if target == nil then
+    return 'unknown'
+  end
+
+  -- `charName` is documented for hero objects.
+  if target.charName ~= nil and target.charName ~= '' then
+    return target.charName
+  end
+
+  -- `name` is also documented on objects, so this is a safe fallback.
+  if target.name ~= nil and target.name ~= '' then
+    return target.name
+  end
+
+  return 'unknown'
+end
+
+local function build_debug_message(target, q_range)
+  local target_name = get_target_name(target)
+
+  return string.format(
+    'would cast Q on target: %s | q_ready=true | q_range=%d',
+    target_name,
+    q_range
+  )
+end
+
 function M.on_tick(menu, spells, targeting)
   if menu == nil or spells == nil or targeting == nil then
     return
@@ -20,7 +50,9 @@ function M.on_tick(menu, spells, targeting)
     return
   end
 
-  if not spells.is_q_ready() then
+  local q_ready = spells.is_q_ready()
+
+  if not q_ready then
     return
   end
 
@@ -39,9 +71,13 @@ function M.on_tick(menu, spells, targeting)
     return
   end
 
+  if not menu.debug_logs:get() then
+    return
+  end
+
   -- We do not store the target object after this point.
   -- v1 only reports that a cast would happen.
-  print('would cast Q on target')
+  print(build_debug_message(target, q_range))
   last_log_time = now
 end
 
