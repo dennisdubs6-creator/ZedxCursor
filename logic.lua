@@ -92,7 +92,9 @@ local function copy_position(pos)
   if pos == nil then
     return nil
   end
-  return vec3(pos.x or 0, pos.y or 0, pos.z or pos.y or 0)
+  -- Hanbot positions use x/y/z ordering, so keep y as height and never
+  -- reuse it as a fallback for z when cloning coordinates.
+  return vec3(pos.x or 0, pos.y or 0, pos.z or 0)
 end
 
 local function distance_between(a, b)
@@ -128,7 +130,7 @@ local function build_clamped_pos(origin, target_pos, max_range)
   local scale = math.min(1, max_range / len)
   return vec3(
     (origin.x or 0) + dx * scale,
-    target_pos.y or target_pos.z or 0,
+    target_pos.y or 0,
     (origin.z or origin.y or 0) + dz * scale
   )
 end
@@ -324,21 +326,21 @@ local function get_effective_energy_gate(ctx, branch)
   local gate = get_menu_energy_gate(ctx, branch)
   if branch == BRANCH_POKE then
     if needs_w_setup(ctx) then
-      return math.max(gate, 165)
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
     end
     if can_execute_poke_now(ctx) then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
     end
   end
   if branch == BRANCH_ALL_IN then
     if ctx.r_ready and ctx.target:isValidTarget(ctx.r_range) then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
     if has_known_shadow_position() then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
     if needs_w_setup(ctx) then
-      return math.max(gate, 165)
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
   end
   return gate
