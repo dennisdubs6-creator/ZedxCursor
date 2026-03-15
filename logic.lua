@@ -88,13 +88,23 @@ local function get_position(obj)
   return nil
 end
 
+-- Clone a position into a vec3, preserving explicit x/y/z components.
+-- @param pos Position-like table with numeric fields `x`, `y`, and `z`, or nil.
+-- @return A vec3 constructed from `pos.x`, `pos.y`, and `pos.z` (missing components default to 0), or nil if `pos` is nil.
 local function copy_position(pos)
   if pos == nil then
     return nil
   end
-  return vec3(pos.x or 0, pos.y or 0, pos.z or pos.y or 0)
+  -- Hanbot positions use x/y/z ordering, so keep y as height and never
+  -- reuse it as a fallback for z when cloning coordinates.
+  return vec3(pos.x or 0, pos.y or 0, pos.z or 0)
 end
 
+-- Computes the horizontal (planar) distance between two position-like values.
+-- Accepts objects that implement a :dist(other) method or plain tables with numeric x/z or x/y fields.
+-- @param a First position or object.
+-- @param b Second position or object.
+-- @return The horizontal distance between a and b; returns math.huge if either argument is nil.
 local function distance_between(a, b)
   if a == nil or b == nil then
     return math.huge
@@ -112,6 +122,11 @@ local function has_known_shadow_position()
   return shadow_state.active and shadow_state.last_known_pos ~= nil
 end
 
+-- Clamp a target position to lie within max_range of an origin and return the resulting vec3, or nil on invalid input.
+-- @param origin Table with numeric fields `x` and `z` (or `y` as fallback for `z`) representing the origin position.
+-- @param target_pos Table with numeric fields `x`, `z` (falls back to `y` for `z`) and `y` representing the target position to clamp.
+-- @param max_range Positive number specifying the maximum allowed distance from origin; values <= 0 are invalid.
+-- @return A vec3 positioned at the clamped location when inputs are valid and distance > 0, or `nil` if inputs are invalid or the origin and target coincide.
 local function build_clamped_pos(origin, target_pos, max_range)
   if origin == nil or target_pos == nil or max_range == nil or max_range <= 0 then
     return nil
@@ -128,7 +143,7 @@ local function build_clamped_pos(origin, target_pos, max_range)
   local scale = math.min(1, max_range / len)
   return vec3(
     (origin.x or 0) + dx * scale,
-    target_pos.y or target_pos.z or 0,
+    target_pos.y or 0,
     (origin.z or origin.y or 0) + dz * scale
   )
 end
@@ -320,25 +335,29 @@ local function needs_w_setup(ctx)
     and can_execute_poke_after_w(ctx)
 end
 
+-- Compute the effective energy gate for a combo branch by combining the menu-configured gate with spell-configured branch gates and situational modifiers.
+-- @param ctx Runtime context containing menu, spells, target, readiness flags, and shadow state.
+-- @param branch One of the branch identifiers (e.g., BRANCH_POKE, BRANCH_ALL_IN, BRANCH_SAFE_HARASS).
+-- @return The numeric energy threshold that must be met to execute the given branch; this value may be raised or lowered relative to the menu gate based on branch-specific spell gates and current combat/shadow conditions.
 local function get_effective_energy_gate(ctx, branch)
   local gate = get_menu_energy_gate(ctx, branch)
   if branch == BRANCH_POKE then
     if needs_w_setup(ctx) then
-      return math.max(gate, 165)
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
     end
     if can_execute_poke_now(ctx) then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_POKE))
     end
   end
   if branch == BRANCH_ALL_IN then
     if ctx.r_ready and ctx.target:isValidTarget(ctx.r_range) then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
     if has_known_shadow_position() then
-      return math.min(gate, 125)
+      return math.min(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
     if needs_w_setup(ctx) then
-      return math.max(gate, 165)
+      return math.max(gate, ctx.spells.get_branch_energy_gate(BRANCH_ALL_IN))
     end
   end
   return gate
